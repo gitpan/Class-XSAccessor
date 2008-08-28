@@ -6,5 +6,6 @@ MANIFEST			This list of files
 ppport.h
 README
 t/01basic.t
+t/02accessor.t
 XSAccessor.xs
 META.yml                                 Module meta-data (added by MakeMaker)
