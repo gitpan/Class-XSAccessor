@@ -7,5 +7,8 @@ ppport.h
 README
 t/01basic.t
 t/02accessor.t
+t/03predicate.t
+t/04chained.t
+t/05replace.t
 XSAccessor.xs
 META.yml                                 Module meta-data (added by MakeMaker)
