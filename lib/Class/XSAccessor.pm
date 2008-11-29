@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 
-our $VERSION = '0.09';
+our $VERSION = '0.10';
 
 require XSLoader;
 XSLoader::load('Class::XSAccessor', $VERSION);
@@ -21,33 +21,38 @@ sub import {
   my $replace = $opts{replace} || 0;
   my $chained = $opts{chained} || 0;
 
-  my $read_subs = $opts{getters} || {};
-  my $set_subs  = $opts{setters} || {};
-  my $acc_subs  = $opts{accessors} || {};
-  my $pred_subs = $opts{predicates} || {};
+  my $read_subs      = $opts{getters} || {};
+  my $set_subs       = $opts{setters} || {};
+  my $acc_subs       = $opts{accessors} || {};
+  my $pred_subs      = $opts{predicates} || {};
+  my $construct_subs = $opts{constructors} || [defined($opts{constructor}) ? $opts{constructor} : ()];
 
   foreach my $subname (keys %$read_subs) {
     my $hashkey = $read_subs->{$subname};
-    _generate_accessor($caller_pkg, $subname, $hashkey, $replace, $chained, "getter");
+    _generate_method($caller_pkg, $subname, $hashkey, $replace, $chained, "getter");
   }
 
   foreach my $subname (keys %$set_subs) {
     my $hashkey = $set_subs->{$subname};
-    _generate_accessor($caller_pkg, $subname, $hashkey, $replace, $chained, "setter");
+    _generate_method($caller_pkg, $subname, $hashkey, $replace, $chained, "setter");
   }
 
   foreach my $subname (keys %$acc_subs) {
     my $hashkey = $acc_subs->{$subname};
-    _generate_accessor($caller_pkg, $subname, $hashkey, $replace, $chained, "accessor");
+    _generate_method($caller_pkg, $subname, $hashkey, $replace, $chained, "accessor");
   }
 
   foreach my $subname (keys %$pred_subs) {
     my $hashkey = $pred_subs->{$subname};
-    _generate_accessor($caller_pkg, $subname, $hashkey, $replace, $chained, "predicate");
+    _generate_method($caller_pkg, $subname, $hashkey, $replace, $chained, "predicate");
+  }
+  
+  foreach my $subname (@$construct_subs) {
+    _generate_method($caller_pkg, $subname, "", $replace, $chained, "constructor");
   }
 }
 
-sub _generate_accessor {
+sub _generate_method {
   my ($caller_pkg, $subname, $hashkey, $replace, $chained, $type) = @_;
 
   if (not defined $hashkey) {
@@ -85,6 +90,9 @@ sub _generate_accessor {
   elsif ($type eq 'predicate') {
     newxs_predicate($subname, $hashkey);
   }
+  elsif ($type eq 'constructor') {
+    newxs_constructor($subname);
+  }
   else {
     newxs_accessor($subname, $hashkey, $chained);
   }
@@ -102,6 +110,7 @@ Class::XSAccessor - Generate fast XS accessors without runtime compilation
   
   package MyClass;
   use Class::XSAccessor
+    constructor => 'new',
     getters => {
       get_foo => 'foo', # 'foo' is the hash key to access
       get_bar => 'bar',
@@ -117,7 +126,7 @@ Class::XSAccessor - Generate fast XS accessors without runtime compilation
     predicates => {
       has_foo => 'foo',
       has_bar => 'bar',
-    },
+    };
   # The imported methods are implemented in fast XS.
   
   # normal class code here.
@@ -131,7 +140,21 @@ It only works with objects that are implemented as ordinary hashes.
 L<Class::XSAccessor::Array> implements the same interface for objects
 that use arrays for their internal representation.
 
-The XS methods were between 1.6 and 2.5 times faster than typical
+Since version 0.10, the module can also generate simple constructors
+(implemented in XS) for you. Simply supply the
+C<constructor =E<gt> 'constructor_name'> option or the
+C<constructors =E<gt> ['new', 'create', 'spawn']> option.
+These constructors do the equivalent of the following perl code:
+
+  sub new {
+    my $class = shift;
+    return bless { @_ }, ref($class)||$class;
+  }
+
+That means they can be called on objects and classes but will not
+clone objects entirely.
+
+The XS accessor methods were between 1.6 and 2.5 times faster than typical
 pure-perl accessors in some simple benchmarking.
 The lower factor applies to the potentially slightly obscure
 C<sub set_foo_pp {$_[0]-E<gt>{foo} = $_[1]}>, so if you usually
@@ -139,7 +162,8 @@ write clear code, a factor of two speed-up is a good estimate.
 
 The method names may be fully qualified. In the example of the
 synopsis, you could have written C<MyClass::get_foo> instead
-of C<get_foo>.
+of C<get_foo>. This way, you can install methods in classes other
+than the current class. See also: The C<class> option below.
 
 By default, the setters return the new value that was set
 and the accessors (mutators) do the same. You can change this behaviour
