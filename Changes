@@ -1,5 +1,23 @@
 Revision history for Perl extension Class-XSAccessor.
 
+1.04_01  Mon Sep  7 11:35 2009
+** This release features some fairly radical changes. Test well. **
+  - Significant optimization by replacing the relevant entersub ops
+    with stripped down versions (Chocolateboy)
+  - More aggressive OPTIMIZE flags if possible (Chocolateboy)
+  - Added shorthand syntax for getters, setters, accessors, and predicates
+    where the attribute has the same name as the method (Chocolateboy)
+  - Remove dependency on AutoXS::Header.
+  - Merge Class::XSAccessor::Array into this distribution.
+  - Refactored the XS to remove duplicate code.
+  - Refactored the perl code in XSAccessor.pm and Array.pm to remove
+    duplicate code (=> Heavy.pm).
+  - Upgrade Devel::PPPort/ppport.h (Chocolateboy)
+
+1.04  Thu Jun 11 16:40 2009
+  - Fix a bunch of warnings thanks to a heads up from
+    Marcela Maslanova.
+
 1.03  Sun May 31 18:45 2009
   - Upgrade to AutoXS::Header 1.01: Make it C89!
 
