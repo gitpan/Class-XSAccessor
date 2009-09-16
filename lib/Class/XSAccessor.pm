@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Carp qw/croak/;
 
-our $VERSION = '1.04_01';
+our $VERSION = '1.04_02';
 
 require XSLoader;
 XSLoader::load('Class::XSAccessor', $VERSION);
@@ -39,6 +39,7 @@ sub import {
   my $set_subs       = _make_hash($opts{setters} || {});
   my $acc_subs       = _make_hash($opts{accessors} || {});
   my $pred_subs      = _make_hash($opts{predicates} || {});
+  my $test_subs      = _make_hash($opts{__tests__} || {});
   my $construct_subs = $opts{constructors} || [defined($opts{constructor}) ? $opts{constructor} : ()];
   my $true_subs      = $opts{true} || [];
   my $false_subs     = $opts{false} || [];
@@ -46,6 +47,7 @@ sub import {
   foreach my $subtype ( ["getter", $read_subs],
                         ["setter", $set_subs],
                         ["accessor", $acc_subs],
+                        ["test", $test_subs],
                         ["pred_subs", $pred_subs] )
   {
     my $subs = $subtype->[1];
@@ -92,6 +94,9 @@ sub _generate_method {
   }
   elsif ($type eq 'false') {
     newxs_boolean($subname, 0);
+  }
+  elsif ($type eq 'test') {
+    newxs_test($subname, $hashkey);
   }
   else {
     newxs_accessor($subname, $hashkey, $opts->{chained}||0);

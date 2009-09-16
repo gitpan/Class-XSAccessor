@@ -31,10 +31,10 @@
  *
  * Inside each Class::XSAccessor XSUB, we can access the current entersub OP (PL_op).
  * The default entersub implementation (pp_entersub) has a lot of boilerplate for
- * dealing with all the different ways in which pp_entersub can be called. It sets up
+ * dealing with all the different ways in which subroutines can be called. It sets up
  * and tears down a new scope; it deals with the fact that the code ref can be passed
  * in as a glob or CV; and it has numerous conditional statements to deal with the various
- * different type of CV.
+ * different types of CV.
  *
  * For our XSUB accessors, we don't need most of that. We don't need to open a new scope;
  * the subroutine is almost always a CV (that's what OP_METHOD and OP_METHOD_NAMED usually return)
@@ -50,11 +50,22 @@
  * and in most dynamic languages (cf. Google's v8), behave like method calls in static
  * languages. for instance, 97% of method calls in perl 5.10.0's test suite are monomorphic
  *
- * We only replaces the op_ppaddr of entersub OPs that use the default pp_entersub.
+ * We only replace the op_ppaddr of entersub OPs that use the default pp_entersub.
  * this ensures we don't interfere with any modules that assign a new op_ppaddr e.g.
  * Data::Alias, Faster. it also ensures we don't tread on our own toes and repeatedly
  * re-assign the same optimized entersub
  */
+
+#define CXAH_OPTIMIZE_ENTERSUB_TEST(name)                         \
+STMT_START {                                                      \
+    if (PL_op->op_ppaddr == CXA_DEFAULT_ENTERSUB) {               \
+        warn("cxah: optimizing entersub for " #name);             \
+        PL_op->op_ppaddr = cxah_entersub_ ## name;                \
+    } else {                                                      \
+        warn("cxah: disabling optimizing accessor for " #name);   \
+        CvXSUB(cv) = CXAH(name);                                  \
+    }                                                             \
+} STMT_END
 
 #define CXAH_OPTIMIZE_ENTERSUB(name)                              \
 STMT_START {                                                      \
@@ -120,36 +131,67 @@ STMT_START {                                                      \
 #define Class__XSAccessor__Array_constant_true Cs_XSAs_Ay_csnt_true
 #endif
 
-#define CXAH_GENERATE_ENTERSUB(name)                                                   \
-OP * cxah_entersub_ ## name(pTHX) {                                                    \
-    dVAR; dSP; dTOPss;                                                                 \
-                                                                                       \
-    if (sv && (SvTYPE(sv) == SVt_PVCV) && (CvXSUB((CV *)sv) == CXAH(name ## _init))) { \
-        POPs;                                                                          \
-        PUTBACK;                                                                       \
-        (void)CXAH(name)(aTHX_ (CV *)sv);                                              \
-        return NORMAL;                                                                 \
-    } else { /* not static: disable optimization */                                    \
-        PL_op->op_ppaddr = CXA_DEFAULT_ENTERSUB;                                       \
-    }                                                                                  \
-                                                                                       \
-    return CALL_FPTR(PL_op->op_ppaddr)(aTHX);                                          \
+#define CXAH_GENERATE_ENTERSUB_TEST(name)                                               \
+static OP * cxah_entersub_ ## name(pTHX) {                                              \
+    dVAR; dSP; dTOPss;                                                                  \
+    void (*xsub)(pTHX_ CV *);                                                           \
+                                                                                        \
+    if (sv                                                                              \
+        && (SvTYPE(sv) == SVt_PVCV)                                                     \
+        && (((xsub = CvXSUB((CV *)sv)) == CXAH(name ## _init)) || (xsub == CXAH(name))) \
+    ) {                                                                                 \
+        POPs;                                                                           \
+        PUTBACK;                                                                        \
+        warn("cxah: inside optimized entersub for " #name);                             \
+        (void)CXAH(name)(aTHX_ (CV *)sv);                                               \
+        return NORMAL;                                                                  \
+    } else { /* not static: disable optimization */                                     \
+        warn("cxah: delegating to standard entersub for " #name);                       \
+	return CALL_FPTR(CXA_DEFAULT_ENTERSUB)(aTHX);                                   \
+        /* PL_op->op_ppaddr = CXA_DEFAULT_ENTERSUB; */                                  \
+    }                                                                                   \
+                                                                                        \
+    return CALL_FPTR(PL_op->op_ppaddr)(aTHX);                                           \
 }
 
-#define CXAA_GENERATE_ENTERSUB(name)                                                   \
-OP * cxaa_entersub_ ## name(pTHX) {                                                    \
-    dVAR; dSP; dTOPss;                                                                 \
-                                                                                       \
-    if (sv && (SvTYPE(sv) == SVt_PVCV) && (CvXSUB((CV *)sv) == CXAA(name ## _init))) { \
-        POPs;                                                                          \
-        PUTBACK;                                                                       \
-        (void)CXAA(name)(aTHX_ (CV *)sv);                                              \
-        return NORMAL;                                                                 \
-    } else { /* not static: disable optimization */                                    \
-        PL_op->op_ppaddr = CXA_DEFAULT_ENTERSUB;                                       \
-    }                                                                                  \
-                                                                                       \
-    return CALL_FPTR(PL_op->op_ppaddr)(aTHX);                                          \
+#define CXAH_GENERATE_ENTERSUB(name)                                                    \
+static OP * cxah_entersub_ ## name(pTHX) {                                              \
+    dVAR; dSP; dTOPss;                                                                  \
+    void (*xsub)(pTHX_ CV *);                                                           \
+                                                                                        \
+    if (sv                                                                              \
+        && (SvTYPE(sv) == SVt_PVCV)                                                     \
+        && (((xsub = CvXSUB((CV *)sv)) == CXAH(name ## _init)) || (xsub == CXAH(name))) \
+    ) {                                                                                 \
+        POPs;                                                                           \
+        PUTBACK;                                                                        \
+        (void)CXAH(name)(aTHX_ (CV *)sv);                                               \
+        return NORMAL;                                                                  \
+    } else { /* not static: disable optimization */                                     \
+        PL_op->op_ppaddr = CXA_DEFAULT_ENTERSUB;                                        \
+    }                                                                                   \
+                                                                                        \
+    return CALL_FPTR(PL_op->op_ppaddr)(aTHX);                                           \
+}
+
+#define CXAA_GENERATE_ENTERSUB(name)                                                    \
+static OP * cxaa_entersub_ ## name(pTHX) {                                              \
+    dVAR; dSP; dTOPss;                                                                  \
+    void (*xsub)(pTHX_ CV *);                                                           \
+                                                                                        \
+    if (sv                                                                              \
+        && (SvTYPE(sv) == SVt_PVCV)                                                     \
+        && (((xsub = CvXSUB((CV *)sv)) == CXAA(name ## _init)) || (xsub == CXAA(name))) \
+    ) {                                                                                 \
+        POPs;                                                                           \
+        PUTBACK;                                                                        \
+        (void)CXAA(name)(aTHX_ (CV *)sv);                                               \
+        return NORMAL;                                                                  \
+    } else { /* not static: disable optimization */                                     \
+        PL_op->op_ppaddr = CXA_DEFAULT_ENTERSUB;                                        \
+    }                                                                                   \
+                                                                                        \
+    return CALL_FPTR(PL_op->op_ppaddr)(aTHX);                                           \
 }
 
 /* Install a new XSUB under 'name' and automatically set the file name */
@@ -234,6 +276,10 @@ CXAH_GENERATE_ENTERSUB(constant_false);
 XS(CXAH(constant_true));
 XS(CXAH(constant_true_init));
 CXAH_GENERATE_ENTERSUB(constant_true);
+
+XS(CXAH(test));
+XS(CXAH(test_init));
+CXAH_GENERATE_ENTERSUB_TEST(test);
 
 XS(CXAA(getter));
 XS(CXAA(getter_init));
