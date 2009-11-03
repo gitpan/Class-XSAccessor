@@ -96,6 +96,7 @@ STMT_START {                                                      \
  * This will probably never get used.
  */
 
+/* FIXME: redo this to include new names */
 #ifdef VMS
 #define Class__XSAccessor_getter_init Class_XSAccessor_getter_init
 #define Class__XSAccessor_setter_init Class_XSAccessor_setter_init
@@ -232,7 +233,10 @@ STMT_START {                                                                 \
   const U32 key_len = strlen(obj_hash_key);                                  \
   const U32 function_index = get_hashkey_index(aTHX_ obj_hash_key, key_len); \
   INSTALL_NEW_CV_WITH_INDEX(name, xsub, function_index);                     \
-  hashkey.key = newSVpvn(obj_hash_key, key_len);                             \
+  Newx(hashkey.key, key_len+1, char);                                        \
+  Copy(obj_hash_key, hashkey.key, key_len, char);                            \
+  hashkey.key[key_len] = 0;                                                  \
+  hashkey.len = key_len;                                                     \
   PERL_HASH(hashkey.hash, obj_hash_key, key_len);                            \
   CXSAccessor_hashkeys[function_index] = hashkey;                            \
 } STMT_END
@@ -322,6 +326,20 @@ PROTOTYPES: DISABLE
 
 BOOT:
 CXA_DEFAULT_ENTERSUB = PL_ppaddr[OP_ENTERSUB];
+_init_cxsa_lock(&CXSAccessor_lock); /* cf. CXSAccessor.h */
+/*
+ * testing the hashtable implementation...
+ */
+/*
+{
+  HashTable* tb = CXSA_HashTable_new(16, 0.9);
+  CXSA_HashTable_store(tb, "test", 4, 12);
+  CXSA_HashTable_store(tb, "test5", 5, 199);
+  warn("12==%u\n", CXSA_HashTable_fetch(tb, "test", 4));
+  warn("199==%u\n", CXSA_HashTable_fetch(tb, "test5", 5));
+  warn("0==%u\n", CXSA_HashTable_fetch(tb, "test123", 7));
+}
+*/
 
 INCLUDE: XS/Hash.xs
 
