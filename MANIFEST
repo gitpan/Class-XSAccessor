@@ -16,8 +16,7 @@ t/04hash_chained.t
 t/05hash_replace.t
 t/06hash_constructor.t
 t/07hash_boolean.t
-t/08_hash_entersub.t
-t/08entersub.t
+t/08hash_entersub.t
 t/09hash_use_hash.t
 t/31array_basic.t
 t/32array_accessor.t
