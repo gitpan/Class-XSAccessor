@@ -1,7 +1,10 @@
-
 ## we want hv_fetch but with the U32 hash argument of hv_fetch_ent, so do it ourselves...
 
+#ifdef hv_common_key_len
 #define CXSA_HASH_FETCH(hv, key, len, hash) hv_common_key_len((hv), (key), (len), HV_FETCH_JUST_SV, NULL, (hash))
+#else
+#define CXSA_HASH_FETCH(hv, key, len, hash) hv_fetch(hv, key, len, 0)
+#endif
 
 MODULE = Class::XSAccessor        PACKAGE = Class::XSAccessor
 PROTOTYPES: DISABLE
@@ -235,7 +238,6 @@ predicate(self)
 void
 constructor_init(class, ...)
     SV* class;
-  ALIAS:
   PREINIT:
     int iStack;
     HV* hash;
@@ -260,7 +262,11 @@ constructor_init(class, ...)
         croak("Uneven number of argument to constructor.");
 
       for (iStack = 1; iStack < items; iStack += 2) {
-        hv_store_ent(hash, ST(iStack), newSVsv(ST(iStack+1)), 0);
+	HE *he;
+        he = hv_store_ent(hash, ST(iStack), newSVsv(ST(iStack+1)), 0);
+        if (!he) {
+          croak("Failed to write value to hash.");
+	}
       }
     }
     XPUSHs(sv_2mortal(obj));
@@ -268,7 +274,6 @@ constructor_init(class, ...)
 void
 constructor(class, ...)
     SV* class;
-  ALIAS:
   PREINIT:
     int iStack;
     HV* hash;
@@ -292,15 +297,20 @@ constructor(class, ...)
         croak("Uneven number of argument to constructor.");
 
       for (iStack = 1; iStack < items; iStack += 2) {
-        hv_store_ent(hash, ST(iStack), newSVsv(ST(iStack+1)), 0);
+	HE *he;
+        he = hv_store_ent(hash, ST(iStack), newSVsv(ST(iStack+1)), 0);
+        if (!he) {
+          croak("Failed to write value to hash.");
+	}
       }
     }
     XPUSHs(sv_2mortal(obj));
 
 void
 constant_false_init(self)
-    SV* self;
+  SV *self;
   PPCODE:
+    PERL_UNUSED_VAR(self);
     CXAH_OPTIMIZE_ENTERSUB(constant_false);
     {
       XSRETURN_NO;
@@ -308,8 +318,9 @@ constant_false_init(self)
 
 void
 constant_false(self)
-    SV* self;
+  SV *self;
   PPCODE:
+    PERL_UNUSED_VAR(self);
     {
       XSRETURN_NO;
     }
@@ -318,6 +329,7 @@ void
 constant_true_init(self)
     SV* self;
   PPCODE:
+    PERL_UNUSED_VAR(self);
     CXAH_OPTIMIZE_ENTERSUB(constant_true);
     {
       XSRETURN_YES;
@@ -327,6 +339,7 @@ void
 constant_true(self)
     SV* self;
   PPCODE:
+    PERL_UNUSED_VAR(self);
     {
       XSRETURN_YES;
     }
@@ -342,7 +355,7 @@ test_init(self, ...)
     const autoxs_hashkey readfrom = CXSAccessor_hashkeys[ix];
     SV** he;
   PPCODE:
-    warn("cxah: inside optimizing accessor");
+    warn("cxah: accessor: inside test_init");
     CXAH_OPTIMIZE_ENTERSUB_TEST(test);
     if (items > 1) {
       SV* newvalue = ST(1);
@@ -368,7 +381,7 @@ test(self, ...)
     const autoxs_hashkey readfrom = CXSAccessor_hashkeys[ix];
     SV** he;
   PPCODE:
-    warn("cxah: inside non-optimizing accessor");
+    warn("cxah: accessor: inside test");
     if (items > 1) {
       SV* newvalue = ST(1);
       if (NULL == hv_store((HV*)SvRV(self), readfrom.key, readfrom.len, newSVsv(newvalue), readfrom.hash))
