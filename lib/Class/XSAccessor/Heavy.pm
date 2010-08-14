@@ -5,10 +5,10 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION  = '1.05';
+our $VERSION  = '1.06';
 our @CARP_NOT = qw(
-	Class::XSAccessor
-	Class::XSAccessor::Array
+        Class::XSAccessor
+        Class::XSAccessor::Array
 );
 
 # TODO Move more duplicated code from XSA and XSA::Array here
