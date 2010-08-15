@@ -27,6 +27,8 @@ t/35array_replace.t
 t/36array_constructor.t
 t/37array_boolean.t
 t/38array_use_hash.t
+t/40hash_bad_call.t
+t/41array_bad_call.t
 XS/Array.xs
 XS/Hash.xs
 XSAccessor.xs
