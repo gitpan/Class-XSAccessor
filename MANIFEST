@@ -19,6 +19,7 @@ t/06hash_constructor.t
 t/07hash_boolean.t
 t/08hash_entersub.t
 t/09hash_use_hash.t
+t/10hash_lvalue.t
 t/31array_basic.t
 t/32array_accessor.t
 t/33array_predicate.t
@@ -27,6 +28,7 @@ t/35array_replace.t
 t/36array_constructor.t
 t/37array_boolean.t
 t/38array_use_hash.t
+t/39array_lvalue.t
 t/40hash_bad_call.t
 t/41array_bad_call.t
 XS/Array.xs

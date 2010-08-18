@@ -1,4 +1,3 @@
-#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
 
@@ -18,7 +17,7 @@
  * (in threaded/multiplicity builds (see intrpvar.h)), which is significantly faster.
  *
  * defining PERL_CORE gets us the fast version, at the expense of a future maintenance release
- * possibly breaking things: http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2008-04/msg00171.html
+ * possibly breaking things: https://groups.google.com/group/perl.perl5.porters/browse_thread/thread/9ec0da3f02b3b5a
  *
  * Rather than globally defining PERL_CORE, which pokes its fingers into various headers, exposing
  * internals we'd rather not see, just define it for XSUB.h, which includes
@@ -251,6 +250,7 @@ STMT_START {                                                                    
 /* FIXME: redo this to include new names */
 #ifdef VMS
 #define Class__XSAccessor_getter_init Class_XSAccessor_getter_init
+/* FIXME add lvalue variants */
 #define Class__XSAccessor_setter_init Class_XSAccessor_setter_init
 #define Class__XSAccessor_chained_setter_init Cs_XSAs_cid_ser_init
 #define Class__XSAccessor_chained_setter Clas_XSAcesor_chained_seter
@@ -359,7 +359,7 @@ STMT_START {                                                                  \
  **/
 #define INSTALL_NEW_CV_WITH_INDEX(name, xsub, function_index)               \
 STMT_START {                                                                \
-  CV* cv = newXS(name, xsub, (char*)__FILE__);                              \
+  cv = newXS(name, xsub, (char*)__FILE__);                                  \
   if (cv == NULL)                                                           \
     croak("ARG! Something went really wrong while installing a new XSUB!"); \
   XSANY.any_i32 = function_index;                                           \
@@ -402,6 +402,10 @@ XS(CXAH(getter));
 XS(CXAH(getter_init));
 CXAH_GENERATE_ENTERSUB(getter);
 
+XS(CXAH(lvalue_accessor));
+XS(CXAH(lvalue_accessor_init));
+CXAH_GENERATE_ENTERSUB(lvalue_accessor);
+
 XS(CXAH(setter));
 XS(CXAH(setter_init));
 CXAH_GENERATE_ENTERSUB(setter);
@@ -442,6 +446,10 @@ XS(CXAA(getter));
 XS(CXAA(getter_init));
 CXAA_GENERATE_ENTERSUB(getter);
 
+XS(CXAA(lvalue_accessor));
+XS(CXAA(lvalue_accessor_init));
+CXAA_GENERATE_ENTERSUB(lvalue_accessor);
+
 XS(CXAA(setter));
 XS(CXAA(setter_init));
 CXAA_GENERATE_ENTERSUB(setter);
@@ -467,6 +475,26 @@ XS(CXAA(constructor_init));
 CXAA_GENERATE_ENTERSUB(constructor);
 
 #endif /* CXA_ENABLE_ENTERSUB_OPTIMIZATION */
+
+
+/* magic vtable and setter function for lvalue accessors */
+int
+setter_for_lvalues(pTHX_ SV *sv, MAGIC* mg)
+{
+  sv_setsv(LvTARG(sv), sv);
+  return TRUE;
+}
+
+static struct mgvtbl cxsa_lvalue_acc_magic_vtable = {
+  0,  setter_for_lvalues,
+  0,  0,  0,
+#if defined(PERL_REVISION) && PERL_VERSION >= 8
+  0,  0,
+#endif
+};
+
+
+
 
 MODULE = Class::XSAccessor        PACKAGE = Class::XSAccessor
 PROTOTYPES: DISABLE
