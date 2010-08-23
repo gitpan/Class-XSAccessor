@@ -70,7 +70,7 @@ if (!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVAV)) {                         
  *
  * There are also situations in which the same entersub OP calls more than one CV: 
  *
- *     $foo->$_() for (foo bar); # OP 1: CV 1, CV 2
+ *     $foo->$_() for ('foo', 'bar'); # OP 1: CV 1, CV 2
  *
  * Inside each Class::XSAccessor XSUB, we can access the current entersub OP (PL_op).
  * The default entersub implementation (pp_entersub in pp_hot.c) has a lot of boilerplate for
@@ -151,7 +151,7 @@ if (!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVAV)) {                         
  *
  * In the second case, we reinstate the previous entersub, which by 1) was perl's pp_entersub.
  * In both cases, we flip a switch on the OP which ensures the *_init XSUB (if ever called again)
- * doesn't try to reinstate the optimized entersub.
+ * doesn't try to reinstate the optimized entersub for that OP.
  *
  * Note: Class::XSAccessor XSUBs continue to optimize "new" call sites, regardless of what may
  * have happened to a "previous" OP or what may happen to a "subsequent" OP. Take the following
@@ -163,7 +163,7 @@ if (!(SvROK(self) && SvTYPE(SvRV(self)) == SVt_PVAV)) {                         
  *     4:
  *     5: for (1 .. 10) {
  *     6:     $self->foo();
- *     7:     $self->$_ for qw(foo bar);
+ *     7:     $self->$_ for ('foo', 'bar');
  *     8:     $self->foo();
  *     9: }
  *
@@ -250,7 +250,8 @@ STMT_START {                                                                    
 /* FIXME: redo this to include new names */
 #ifdef VMS
 #define Class__XSAccessor_getter_init Class_XSAccessor_getter_init
-/* FIXME add lvalue variants */
+#define Class__XSAccessor_lvalue_accessor_init Class_XSAcc_lvacc_init
+#define Class__XSAccessor_lvalue_accessor Class_XSAcc_lvacc
 #define Class__XSAccessor_setter_init Class_XSAccessor_setter_init
 #define Class__XSAccessor_chained_setter_init Cs_XSAs_cid_ser_init
 #define Class__XSAccessor_chained_setter Clas_XSAcesor_chained_seter
@@ -266,6 +267,8 @@ STMT_START {                                                                    
 #define Class__XSAccessor_constant_true Clas_XSAcesor_constant_true
 #define Class__XSAccessor__Array_getter_init Cs_XSAs_Ay_ger_init
 #define Class__XSAccessor__Array_getter Clas_XSAcesor_Aray_geter
+#define Class__XSAccessor__Array_lvalue_accessor_init Class_XSAcc_Ay_lvacc_init
+#define Class__XSAccessor__Array_lvalue_accessor Class_XSAcc_Ay_lvacc
 #define Class__XSAccessor__Array_setter_init Cs_XSAs_Ay_ser_init
 #define Class__XSAccessor__Array_setter Clas_XSAcesor_Aray_seter
 #define Class__XSAccessor__Array_chained_setter_init Cs_XSAs_Ay_cid_ser_init
@@ -476,25 +479,32 @@ CXAA_GENERATE_ENTERSUB(constructor);
 
 #endif /* CXA_ENABLE_ENTERSUB_OPTIMIZATION */
 
-
 /* magic vtable and setter function for lvalue accessors */
-int
+STATIC int
+setter_for_lvalues(pTHX_ SV *sv, MAGIC* mg);
+
+STATIC int
 setter_for_lvalues(pTHX_ SV *sv, MAGIC* mg)
 {
+  PERL_UNUSED_VAR(mg);
   sv_setsv(LvTARG(sv), sv);
   return TRUE;
 }
 
-static struct mgvtbl cxsa_lvalue_acc_magic_vtable = {
-  0,  setter_for_lvalues,
-  0,  0,  0,
-#if defined(PERL_REVISION) && PERL_VERSION >= 8
-  0,  0,
-#endif
+STATIC MGVTBL cxsa_lvalue_acc_magic_vtable = {
+     0                               /* get   */
+    ,setter_for_lvalues              /* set   */
+    ,0                               /* len   */
+    ,0                               /* clear */
+    ,0                               /* free  */
+#if (PERL_BCDVERSION >= 0x5008000)
+    ,0                               /* copy  */
+    ,0                               /* dup   */
+#if (PERL_BCDVERSION >= 0x5008009)
+    ,0                               /* local */
+#endif /* perl >= 5.8.0 */
+#endif /* perl >= 5.8.9 */
 };
-
-
-
 
 MODULE = Class::XSAccessor        PACKAGE = Class::XSAccessor
 PROTOTYPES: DISABLE
