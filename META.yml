@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Class-XSAccessor
-version:            1.07_02
+version:            1.07_03
 abstract:           Generate fast XS accessors without runtime compilation
 author:
     - Steffen Mueller <smueller@cpan.org>
@@ -14,12 +14,12 @@ requires:
     perl:      5.008
     XSLoader:  0
 resources:
-    repository:  http://svn.ali.as/cpan/trunk/Class-XSAccessor
+    repository:  git://github.com/tsee/Class-XSAccessor.git
 no_index:
     directory:
         - t
         - inc
-generated_by:       ExtUtils::MakeMaker version 6.56
+generated_by:       ExtUtils::MakeMaker version 6.57_01
 meta-spec:
     url:      http://module-build.sourceforge.net/META-spec-v1.4.html
     version:  1.4

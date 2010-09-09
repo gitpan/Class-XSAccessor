@@ -16,13 +16,17 @@ if ($Config{gccversion}) {
     $OPTIMIZE = $Config{optimize};
 }
 
+if ($ENV{DEBUG}) {
+  $OPTIMIZE .= ' -g';
+}
+
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 WriteMakefile1(
     MIN_PERL_VERSION => '5.008',
     META_MERGE => {
         resources => {
-            repository => 'http://svn.ali.as/cpan/trunk/Class-XSAccessor',
+            repository => 'git://github.com/tsee/Class-XSAccessor.git'
         },
     },
     BUILD_REQUIRES => {

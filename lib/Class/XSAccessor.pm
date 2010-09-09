@@ -1,18 +1,14 @@
 package Class::XSAccessor;
-
-use 5.006;
-
+use 5.008;
 use strict;
 use warnings;
-
 use Carp qw/croak/;
+use Class::XSAccessor::Heavy;
+use XSLoader;
 
-our $VERSION = '1.07_02';
+our $VERSION = '1.07_03';
 
-require XSLoader;
 XSLoader::load('Class::XSAccessor', $VERSION);
-
-require Class::XSAccessor::Heavy;
 
 sub _make_hash {
   my $ref = shift;
@@ -299,7 +295,7 @@ but it will be recycled when the same class, or a similar class, is loaded again
 
 Steffen Mueller E<lt>smueller@cpan.orgE<gt>
 
-Chocolateboy E<lt>chocolate@cpan.orgE<gt>
+chocolateboy E<lt>chocolate@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

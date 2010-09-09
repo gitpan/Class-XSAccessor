@@ -1,4 +1,6 @@
 author_scripts/benchmark.pl
+author_scripts/constructor_benchmark.pl
+author_scripts/refcount_constructor.pl
 Changes
 CXSAccessor.h
 hash_table.h

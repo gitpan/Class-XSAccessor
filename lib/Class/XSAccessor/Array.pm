@@ -1,14 +1,12 @@
 package Class::XSAccessor::Array;
-
-use 5.006;
+use 5.008;
 use strict;
 use warnings;
 use Carp qw/croak/;
+use Class::XSAccessor;
+use Class::XSAccessor::Heavy;
 
-our $VERSION = '1.07_02';
-
-require Class::XSAccessor;
-require Class::XSAccessor::Heavy;
+our $VERSION = '1.07_03';
 
 sub import {
   my $own_class = shift;
@@ -273,7 +271,7 @@ L<AutoXS>
 
 Steffen Mueller E<lt>smueller@cpan.orgE<gt>
 
-Chocolateboy E<lt>chocolate@cpan.orgE<gt>
+chocolateboy E<lt>chocolate@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
@@ -284,4 +282,3 @@ it under the same terms as Perl itself, either Perl version 5.8 or,
 at your option, any later version of Perl 5 you may have available.
 
 =cut
-
