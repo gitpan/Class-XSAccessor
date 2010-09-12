@@ -2,6 +2,7 @@ author_scripts/benchmark.pl
 author_scripts/constructor_benchmark.pl
 author_scripts/refcount_constructor.pl
 Changes
+cxsa_memory.h
 CXSAccessor.h
 hash_table.h
 lib/Class/XSAccessor.pm
@@ -33,6 +34,7 @@ t/38array_use_hash.t
 t/39array_lvalue.t
 t/40hash_bad_call.t
 t/41array_bad_call.t
+t/80threadbomb.t
 XS/Array.xs
 XS/Hash.xs
 XSAccessor.xs
