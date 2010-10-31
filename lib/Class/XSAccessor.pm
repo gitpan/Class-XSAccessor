@@ -6,7 +6,7 @@ use Carp qw/croak/;
 use Class::XSAccessor::Heavy;
 use XSLoader;
 
-our $VERSION = '1.08';
+our $VERSION = '1.09';
 
 XSLoader::load('Class::XSAccessor', $VERSION);
 
@@ -49,7 +49,7 @@ sub import {
                         ["accessor", $acc_subs],
                         ["lvalue_accessor", $lvacc_subs],
                         ["test", $test_subs],
-                        ["pred_subs", $pred_subs] )
+                        ["predicate", $pred_subs] )
   {
     my $subs = $subtype->[1];
     foreach my $subname (keys %$subs) {

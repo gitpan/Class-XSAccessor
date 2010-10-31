@@ -34,6 +34,7 @@ t/38array_use_hash.t
 t/39array_lvalue.t
 t/40hash_bad_call.t
 t/41array_bad_call.t
+t/50reentrant_goto_sigsegv.t
 t/80threadbomb.t
 XS/Array.xs
 XS/Hash.xs
