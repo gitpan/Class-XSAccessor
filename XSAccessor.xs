@@ -563,7 +563,7 @@ END()
     PROTOTYPE:
     CODE:
         if (CXSAccessor_reverse_hashkeys) {
-            CXSA_HashTable_free(CXSAccessor_reverse_hashkeys);
+            /*CXSA_HashTable_free(CXSAccessor_reverse_hashkeys);*/
         }
 
 void
@@ -577,5 +577,7 @@ __entersub_optimized__()
 #endif
 
 INCLUDE: XS/Hash.xs
+
+INCLUDE: XS/HashCACompat.xs
 
 INCLUDE: XS/Array.xs

@@ -38,5 +38,6 @@ t/50reentrant_goto_sigsegv.t
 t/80threadbomb.t
 XS/Array.xs
 XS/Hash.xs
+XS/HashCACompat.xs
 XSAccessor.xs
 META.yml                                 Module meta-data (added by MakeMaker)

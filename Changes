@@ -1,9 +1,16 @@
 Revision history for Perl extension Class-XSAccessor.
 
+1.10  Wed Dec  1 20:44 2010
+  - Fix RT #63458 and potentially #50454
+    We don't occasionally crash during END any more.
+    Instead, we rely on the OS to reap a bit of memory after
+    perl was shut down anyway.
+  - Tiny refactoring for smaller object size.
+
 1.09  Sun Oct 31 12:45 2010
   - Fix #62531: Predicates return value, not bool (SJOHNSTON)
   - TODO test for perl-crashing bug (in perl) that can happen
-    on (arcane) XSUB aliasing on perl's < 5.8.9 (Peter Rabbitson)
+    on (arcane) XSUB aliasing on perls < 5.8.9 (Peter Rabbitson)
     We're open for work-around patches.
 
 1.08  Fri Sep 17 20:30 2010
