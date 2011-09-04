@@ -11,6 +11,8 @@ lib/Class/XSAccessor/Heavy.pm
 Makefile.PL
 MANIFEST			This list of files
 MurmurHashNeutral2.h
+MYMETA.json
+MYMETA.yml
 ppport.h
 README
 t/01hash_basic.t
@@ -35,9 +37,11 @@ t/39array_lvalue.t
 t/40hash_bad_call.t
 t/41array_bad_call.t
 t/50reentrant_goto_sigsegv.t
+t/70bad_arguments.t
 t/80threadbomb.t
 XS/Array.xs
 XS/Hash.xs
 XS/HashCACompat.xs
 XSAccessor.xs
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)
