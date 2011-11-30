@@ -3,7 +3,7 @@ abstract: 'Generate fast XS accessors without runtime compilation'
 author:
   - 'Steffen Mueller <smueller@cpan.org>'
 build_requires:
-  Test::More: 0
+  Test::More: 0.88
 configure_requires:
   ExtUtils::MakeMaker: 0
 dynamic_config: 1
@@ -22,4 +22,4 @@ requires:
   perl: 5.008
 resources:
   repository: git://github.com/tsee/Class-XSAccessor.git
-version: 1.12
+version: 1.12_01

@@ -1,18 +1,6 @@
 #include "ppport.h"
 
-## we want hv_fetch but with the U32 hash argument of hv_fetch_ent, so do it ourselves...
-#ifdef hv_common_key_len
-#define CXSA_HASH_FETCH(hv, key, len, hash) hv_common_key_len((hv), (key), (len), HV_FETCH_JUST_SV, NULL, (hash))
-#define CXSA_HASH_FETCH_LVALUE(hv, key, len, hash) hv_common_key_len((hv), (key), (len), (HV_FETCH_JUST_SV|HV_FETCH_LVALUE), NULL, (hash))
-#else
-#define CXSA_HASH_FETCH(hv, key, len, hash) hv_fetch((hv), (key), (len), 0)
-#define CXSA_HASH_FETCH_LVALUE(hv, key, len, hash) hv_fetch((hv), (key), (len), 1)
-#endif
-
-
-#ifndef croak_xs_usage
-#define croak_xs_usage(cv,msg) croak(aTHX_ "Usage: %s(%s)", GvNAME(CvGV(cv)), msg)
-#endif
+#include "cxsa_util_macros.h"
 
 MODULE = Class::XSAccessor        PACKAGE = Class::XSAccessor
 PROTOTYPES: DISABLE
@@ -467,6 +455,7 @@ newxs_getter(name, key)
   ALIAS:
     Class::XSAccessor::newxs_lvalue_accessor = 1
     Class::XSAccessor::newxs_predicate = 2
+    Class::XSAccessor::newxs_cached_getter = 3
   PPCODE:
     switch (ix) {
     case 0: /* newxs_getter */
@@ -482,6 +471,9 @@ newxs_getter(name, key)
     case 2:
       INSTALL_NEW_CV_HASH_OBJ(name, CXAH(predicate_init), key);
       break;
+    case 3: /* note: cached_getter(_init) implementation lives in HashCached.xs */
+      INSTALL_NEW_CV_HASH_OBJ(name, CXAH(cached_getter_init), key);
+      break;
     default:
       croak("Invalid alias of newxs_getter called");
       break;
@@ -494,18 +486,25 @@ newxs_setter(name, key, chained)
     bool chained;
   ALIAS:
     Class::XSAccessor::newxs_accessor = 1
+    Class::XSAccessor::newxs_cached_accessor = 2
   PPCODE:
     if (ix == 0) { /* newxs_setter */
-    if (chained)
-      INSTALL_NEW_CV_HASH_OBJ(name, CXAH(chained_setter_init), key);
-    else
-      INSTALL_NEW_CV_HASH_OBJ(name, CXAH(setter_init), key);
-    }
-    else { /* newxs_accessor */
+      if (chained)
+        INSTALL_NEW_CV_HASH_OBJ(name, CXAH(chained_setter_init), key);
+      else
+        INSTALL_NEW_CV_HASH_OBJ(name, CXAH(setter_init), key);
+      }
+    else if (ix == 1) { /* newxs_accessor */
       if (chained)
         INSTALL_NEW_CV_HASH_OBJ(name, CXAH(chained_accessor_init), key);
       else
         INSTALL_NEW_CV_HASH_OBJ(name, CXAH(accessor_init), key);
+    }
+    else { /* newxs_cached_accessor, see HashCached.xs for implementation */
+      if (chained)
+        croak("No chained variant of the cached accessor implemented");
+      else
+        INSTALL_NEW_CV_HASH_OBJ(name, CXAH(cached_accessor_init), key);
     }
 
 void

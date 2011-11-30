@@ -430,6 +430,16 @@ XS(CXAH(getter));
 XS(CXAH(getter_init));
 CXAH_GENERATE_ENTERSUB(getter);
 
+/* for hash-cached getters with fallback to generic method call */
+XS(CXAH(cached_getter));
+XS(CXAH(cached_getter_init));
+CXAH_GENERATE_ENTERSUB(cached_getter);
+
+/* for hash-cached accessors with fallback to generic method call */
+XS(CXAH(cached_accessor));
+XS(CXAH(cached_accessor_init));
+CXAH_GENERATE_ENTERSUB(cached_accessor);
+
 XS(CXAH(lvalue_accessor));
 XS(CXAH(lvalue_accessor_init));
 CXAH_GENERATE_ENTERSUB(lvalue_accessor);
@@ -438,7 +448,7 @@ XS(CXAH(setter));
 XS(CXAH(setter_init));
 CXAH_GENERATE_ENTERSUB(setter);
 
-/* for the Class::Accessor compatibility layer only! */
+/* for the Class::Accessor::Fast compatibility layer only! */
 XS(CXAH(array_setter));
 XS(CXAH(array_setter_init));
 CXAH_GENERATE_ENTERSUB(array_setter);
@@ -451,7 +461,7 @@ XS(CXAH(accessor));
 XS(CXAH(accessor_init));
 CXAH_GENERATE_ENTERSUB(accessor);
 
-/* for the Class::Accessor compatibility layer only! */
+/* for the Class::Accessor::Fast compatibility layer only! */
 XS(CXAH(array_accessor));
 XS(CXAH(array_accessor_init));
 CXAH_GENERATE_ENTERSUB(array_accessor);
@@ -585,6 +595,8 @@ __entersub_optimized__()
 
 INCLUDE: XS/Hash.xs
 
-INCLUDE: XS/HashCACompat.xs
+INCLUDE: XS/HashCAFCompat.xs
+
+INCLUDE: XS/HashCached.xs
 
 INCLUDE: XS/Array.xs

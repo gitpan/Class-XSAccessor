@@ -22,7 +22,7 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "Test::More" : 0
+            "Test::More" : "0.88"
          }
       },
       "configure" : {
@@ -37,11 +37,11 @@
          }
       }
    },
-   "release_status" : "stable",
+   "release_status" : "testing",
    "resources" : {
       "repository" : {
          "url" : "git://github.com/tsee/Class-XSAccessor.git"
       }
    },
-   "version" : "1.12"
+   "version" : "1.12_01"
 }

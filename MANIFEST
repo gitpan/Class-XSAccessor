@@ -3,6 +3,7 @@ author_scripts/constructor_benchmark.pl
 author_scripts/refcount_constructor.pl
 Changes
 cxsa_memory.h
+cxsa_util_macros.h
 CXSAccessor.h
 hash_table.h
 lib/Class/XSAccessor.pm
@@ -25,6 +26,7 @@ t/07hash_boolean.t
 t/08hash_entersub.t
 t/09hash_use_hash.t
 t/10hash_lvalue.t
+t/11hash_cached.t
 t/31array_basic.t
 t/32array_accessor.t
 t/33array_predicate.t
@@ -41,7 +43,8 @@ t/70bad_arguments.t
 t/80threadbomb.t
 XS/Array.xs
 XS/Hash.xs
-XS/HashCACompat.xs
+XS/HashCached.xs
+XS/HashCAFCompat.xs
 XSAccessor.xs
 META.yml                                 Module YAML meta-data (added by MakeMaker)
 META.json                                Module JSON meta-data (added by MakeMaker)
