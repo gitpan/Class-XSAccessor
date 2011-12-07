@@ -1,6 +1,15 @@
 #include "ppport.h"
 
-#include "cxsa_util_macros.h"
+## we want hv_fetch but with the U32 hash argument of hv_fetch_ent, so do it ourselves...
+#ifdef hv_common_key_len
+#define CXSA_HASH_FETCH(hv, key, len, hash) hv_common_key_len((hv), (key), (len), HV_FETCH_JUST_SV, NULL, (hash))
+#else
+#define CXSA_HASH_FETCH(hv, key, len, hash) hv_fetch(hv, key, len, 0)
+#endif
+
+#ifndef croak_xs_usage
+#define croak_xs_usage(cv,msg) croak(aTHX_ "Usage: %s(%s)", GvNAME(CvGV(cv)), msg)
+#endif
 
 MODULE = Class::XSAccessor        PACKAGE = Class::XSAccessor
 PROTOTYPES: DISABLE
@@ -9,16 +18,13 @@ PROTOTYPES: DISABLE
 void
 array_setter_init(self, ...)
     SV* self;
-  ALIAS:
   INIT:
     /* NOTE: This method is for Class::Accessor compatibility only. It's not
      *       part of the normal API! */
-    /* Get the const hash key struct from the global storage */
-    /* ix is the magic integer variable that is set by the perl guts for us.
-     * We uses it to identify the currently running alias of the accessor. Gollum! */
     SV* newvalue = NULL; /* squelch may-be-used-uninitialized warning that doesn't apply */
     SV ** hashAssignRes;
-    const autoxs_hashkey readfrom = CXSAccessor_hashkeys[ix];
+    /* Get the const hash key struct from the global storage */
+    const autoxs_hashkey * readfrom = CXAH_GET_HASHKEY;
   PPCODE:
     CXA_CHECK_HASH(self);
     CXAH_OPTIMIZE_ENTERSUB(array_setter);
@@ -42,7 +48,7 @@ array_setter_init(self, ...)
       croak_xs_usage(cv, "self, newvalue(s)");
     }
 
-    if ((hashAssignRes = hv_store((HV*)SvRV(self), readfrom.key, readfrom.len, newvalue, readfrom.hash))) {
+    if ((hashAssignRes = hv_store((HV*)SvRV(self), readfrom->key, readfrom->len, newvalue, readfrom->hash))) {
       PUSHs(*hashAssignRes);
     }
     else {
@@ -53,16 +59,13 @@ array_setter_init(self, ...)
 void
 array_setter(self, ...)
     SV* self;
-  ALIAS:
   INIT:
     /* NOTE: This method is for Class::Accessor compatibility only. It's not
      *       part of the normal API! */
-    /* Get the const hash key struct from the global storage */
-    /* ix is the magic integer variable that is set by the perl guts for us.
-     * We uses it to identify the currently running alias of the accessor. Gollum! */
     SV* newvalue = NULL; /* squelch may-be-used-uninitialized warning that doesn't apply */
     SV ** hashAssignRes;
-    const autoxs_hashkey readfrom = CXSAccessor_hashkeys[ix];
+    /* Get the const hash key struct from the global storage */
+    const autoxs_hashkey * readfrom = CXAH_GET_HASHKEY;
   PPCODE:
     CXA_CHECK_HASH(self);
     if (items == 2) {
@@ -85,7 +88,7 @@ array_setter(self, ...)
       croak_xs_usage(cv, "self, newvalue(s)");
     }
 
-    if ((hashAssignRes = hv_store((HV*)SvRV(self), readfrom.key, readfrom.len, newvalue, readfrom.hash))) {
+    if ((hashAssignRes = hv_store((HV*)SvRV(self), readfrom->key, readfrom->len, newvalue, readfrom->hash))) {
       PUSHs(*hashAssignRes);
     }
     else {
@@ -96,21 +99,18 @@ array_setter(self, ...)
 void
 array_accessor_init(self, ...)
     SV* self;
-  ALIAS:
   INIT:
     /* NOTE: This method is for Class::Accessor compatibility only. It's not
      *       part of the normal API! */
-    /* Get the const hash key struct from the global storage */
-    /* ix is the magic integer variable that is set by the perl guts for us.
-     * We uses it to identify the currently running alias of the accessor. Gollum! */
     SV ** hashAssignRes;
-    const autoxs_hashkey readfrom = CXSAccessor_hashkeys[ix];
+    /* Get the const hash key struct from the global storage */
+    const autoxs_hashkey * readfrom = CXAH_GET_HASHKEY;
   PPCODE:
     CXA_CHECK_HASH(self);
     CXAH_OPTIMIZE_ENTERSUB(array_accessor);
     if (items == 1) {
       SV** svp;
-      if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom.key, readfrom.len, readfrom.hash)))
+      if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash)))
         PUSHs(*svp);
       else
         XSRETURN_UNDEF;
@@ -134,7 +134,7 @@ array_accessor_init(self, ...)
         newvalue = newRV_noinc((SV*) tmp);
       }
 
-      if ((hashAssignRes = hv_store((HV*)SvRV(self), readfrom.key, readfrom.len, newvalue, readfrom.hash))) {
+      if ((hashAssignRes = hv_store((HV*)SvRV(self), readfrom->key, readfrom->len, newvalue, readfrom->hash))) {
         PUSHs(*hashAssignRes);
       }
       else {
@@ -146,20 +146,17 @@ array_accessor_init(self, ...)
 void
 array_accessor(self, ...)
     SV* self;
-  ALIAS:
   INIT:
     /* NOTE: This method is for Class::Accessor compatibility only. It's not
      *       part of the normal API! */
-    /* Get the const hash key struct from the global storage */
-    /* ix is the magic integer variable that is set by the perl guts for us.
-     * We uses it to identify the currently running alias of the accessor. Gollum! */
     SV ** hashAssignRes;
-    const autoxs_hashkey readfrom = CXSAccessor_hashkeys[ix];
+    /* Get the const hash key struct from the global storage */
+    const autoxs_hashkey * readfrom = CXAH_GET_HASHKEY;
   PPCODE:
     CXA_CHECK_HASH(self);
     if (items == 1) {
       SV** svp;
-      if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom.key, readfrom.len, readfrom.hash)))
+      if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash)))
         PUSHs(*svp);
       else
         XSRETURN_UNDEF;
@@ -183,7 +180,7 @@ array_accessor(self, ...)
         newvalue = newRV_noinc((SV*) tmp);
       }
 
-      if ((hashAssignRes = hv_store((HV*)SvRV(self), readfrom.key, readfrom.len, newvalue, readfrom.hash))) {
+      if ((hashAssignRes = hv_store((HV*)SvRV(self), readfrom->key, readfrom->len, newvalue, readfrom->hash))) {
         PUSHs(*hashAssignRes);
       }
       else {
