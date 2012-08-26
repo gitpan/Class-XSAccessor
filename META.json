@@ -4,7 +4,7 @@
       "Steffen Mueller <smueller@cpan.org>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "ExtUtils::MakeMaker version 6.62, CPAN::Meta::Converter version 2.112150",
+   "generated_by" : "ExtUtils::MakeMaker version 6.62, CPAN::Meta::Converter version 2.120921",
    "license" : [
       "perl_5"
    ],
@@ -22,17 +22,17 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "Test::More" : 0
+            "Test::More" : "0"
          }
       },
       "configure" : {
          "requires" : {
-            "ExtUtils::MakeMaker" : 0
+            "ExtUtils::MakeMaker" : "0"
          }
       },
       "runtime" : {
          "requires" : {
-            "XSLoader" : 0,
+            "XSLoader" : "0",
             "perl" : "5.008"
          }
       }
@@ -43,5 +43,5 @@
          "url" : "git://github.com/tsee/Class-XSAccessor.git"
       }
    },
-   "version" : "1.13"
+   "version" : "1.14"
 }
