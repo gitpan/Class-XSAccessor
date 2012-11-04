@@ -22,4 +22,4 @@ requires:
   perl: 5.008
 resources:
   repository: git://github.com/tsee/Class-XSAccessor.git
-version: 1.14
+version: 1.15
