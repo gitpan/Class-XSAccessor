@@ -42,6 +42,7 @@ t/41array_bad_call.t
 t/50reentrant_goto_sigsegv.t
 t/70bad_arguments.t
 t/80threadbomb.t
+t/90regr_82689.t
 XS/Array.xs
 XS/Hash.xs
 XS/HashCACompat.xs

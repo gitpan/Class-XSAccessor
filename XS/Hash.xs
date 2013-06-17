@@ -1,12 +1,22 @@
 #include "ppport.h"
 
 ## we want hv_fetch but with the U32 hash argument of hv_fetch_ent, so do it ourselves...
+
 #ifdef hv_common_key_len
-#define CXSA_HASH_FETCH(hv, key, len, hash) hv_common_key_len((hv), (key), (len), HV_FETCH_JUST_SV, NULL, (hash))
-#define CXSA_HASH_FETCH_LVALUE(hv, key, len, hash) hv_common_key_len((hv), (key), (len), (HV_FETCH_JUST_SV|HV_FETCH_LVALUE), NULL, (hash))
+
+# define CXSA_HASH_FETCH(hv, key, len, hash) \
+      hv_common_key_len((hv), (key), (len), HV_FETCH_JUST_SV, NULL, (hash))
+# define CXSA_HASH_FETCH_LVALUE(hv, key, len, hash) \
+      hv_common_key_len((hv), (key), (len), (HV_FETCH_JUST_SV|HV_FETCH_LVALUE), NULL, (hash))
+# define CXSA_HASH_EXISTS(hv, key, len, hash) \
+      hv_common_key_len((hv), (key), (len), HV_FETCH_ISEXISTS, NULL, (hash))
+
 #else
-#define CXSA_HASH_FETCH(hv, key, len, hash) hv_fetch((hv), (key), (len), 0)
-#define CXSA_HASH_FETCH_LVALUE(hv, key, len, hash) hv_fetch((hv), (key), (len), 1)
+
+# define CXSA_HASH_FETCH(hv, key, len, hash) hv_fetch((hv), (key), (len), 0)
+# define CXSA_HASH_FETCH_LVALUE(hv, key, len, hash) hv_fetch((hv), (key), (len), 1)
+# define CXSA_HASH_EXISTS(hv, key, len, hash) hv_exists((hv), (key), (len))
+
 #endif
 
 
@@ -28,7 +38,7 @@ getter_init(self)
     CXA_CHECK_HASH(self);
     CXAH_OPTIMIZE_ENTERSUB(getter);
     if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash)))
-      PUSHs(*svp);
+      XSA_RETURN_SV(*svp);
     else
       XSRETURN_UNDEF;
 
@@ -42,7 +52,7 @@ getter(self)
   PPCODE:
     CXA_CHECK_HASH(self);
     if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash)))
-      PUSHs(*svp);
+      XSA_RETURN_SV(*svp);
     else
       XSRETURN_UNDEF;
 
@@ -169,7 +179,7 @@ accessor_init(self, ...)
     }
     else {
       if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash)))
-        PUSHs(*svp);
+        XSA_RETURN_SV(*svp);
       else
         XSRETURN_UNDEF;
     }
@@ -191,7 +201,7 @@ accessor(self, ...)
     }
     else {
       if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash)))
-        PUSHs(*svp);
+        XSA_RETURN_SV(*svp);
       else
         XSRETURN_UNDEF;
     }
@@ -215,7 +225,7 @@ chained_accessor_init(self, ...)
     }
     else {
       if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash)))
-        PUSHs(*svp);
+        XSA_RETURN_SV(*svp);
       else
         XSRETURN_UNDEF;
     }
@@ -237,13 +247,40 @@ chained_accessor(self, ...)
     }
     else {
       if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash)))
-        PUSHs(*svp);
+        XSA_RETURN_SV(*svp);
       else
         XSRETURN_UNDEF;
     }
 
 void
-predicate_init(self)
+exists_predicate_init(self)
+    SV* self;
+  INIT:
+    /* Get the const hash key struct from the global storage */
+    const autoxs_hashkey * readfrom = CXAH_GET_HASHKEY;
+  PPCODE:
+    CXA_CHECK_HASH(self);
+    CXAH_OPTIMIZE_ENTERSUB(exists_predicate);
+    if ( CXSA_HASH_EXISTS((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash) != NULL )
+      XSRETURN_YES;
+    else
+      XSRETURN_NO;
+
+void
+exists_predicate(self)
+    SV* self;
+  INIT:
+    /* Get the const hash key struct from the global storage */
+    const autoxs_hashkey * readfrom = CXAH_GET_HASHKEY;
+  PPCODE:
+    CXA_CHECK_HASH(self);
+    if ( CXSA_HASH_EXISTS((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash) != NULL )
+      XSRETURN_YES;
+    else
+      XSRETURN_NO;
+
+void
+defined_predicate_init(self)
     SV* self;
   INIT:
     /* Get the const hash key struct from the global storage */
@@ -251,14 +288,14 @@ predicate_init(self)
     SV** svp;
   PPCODE:
     CXA_CHECK_HASH(self);
-    CXAH_OPTIMIZE_ENTERSUB(predicate);
+    CXAH_OPTIMIZE_ENTERSUB(defined_predicate);
     if ( ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash))) && SvOK(*svp) )
       XSRETURN_YES;
     else
       XSRETURN_NO;
 
 void
-predicate(self)
+defined_predicate(self)
     SV* self;
   INIT:
     /* Get the const hash key struct from the global storage */
@@ -270,6 +307,7 @@ predicate(self)
       XSRETURN_YES;
     else
       XSRETURN_NO;
+
 
 void
 constructor_init(class, ...)
@@ -280,6 +318,7 @@ constructor_init(class, ...)
     SV* obj;
     const char* classname;
   PPCODE:
+    /* FIXME this could most likely use TARG, too */
     CXAH_OPTIMIZE_ENTERSUB(constructor);
 
     classname = SvROK(class) ? sv_reftype(SvRV(class), 1) : SvPV_nolen_const(class);
@@ -309,6 +348,7 @@ constructor(class, ...)
     SV* obj;
     const char* classname;
   PPCODE:
+    /* FIXME this could most likely use TARG, too */
     classname = SvROK(class) ? sv_reftype(SvRV(class), 1) : SvPV_nolen_const(class);
     hash = newHV();
     obj = sv_bless(newRV_noinc((SV *)hash), gv_stashpv(classname, 1));
@@ -384,7 +424,7 @@ test_init(self, ...)
     }
     else {
       if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash)))
-        PUSHs(*svp);
+        XSA_RETURN_SV(*svp);
       else
         XSRETURN_UNDEF;
     }
@@ -407,7 +447,7 @@ test(self, ...)
     }
     else {
       if ((svp = CXSA_HASH_FETCH((HV *)SvRV(self), readfrom->key, readfrom->len, readfrom->hash)))
-        PUSHs(*svp);
+        XSA_RETURN_SV(*svp);
       else
         XSRETURN_UNDEF;
     }
@@ -419,6 +459,8 @@ newxs_getter(namesv, keysv)
   ALIAS:
     Class::XSAccessor::newxs_lvalue_accessor = 1
     Class::XSAccessor::newxs_predicate = 2
+    Class::XSAccessor::newxs_defined_predicate = 3
+    Class::XSAccessor::newxs_exists_predicate = 4
   PREINIT:
     char *name;
     char *key;
@@ -438,7 +480,11 @@ newxs_getter(namesv, keysv)
       }
       break;
     case 2:
-      INSTALL_NEW_CV_HASH_OBJ(name, CXAH(predicate_init), key, keylen);
+    case 3:
+      INSTALL_NEW_CV_HASH_OBJ(name, CXAH(defined_predicate_init), key, keylen);
+      break;
+    case 4:
+      INSTALL_NEW_CV_HASH_OBJ(name, CXAH(exists_predicate_init), key, keylen);
       break;
     default:
       croak("Invalid alias of newxs_getter called");

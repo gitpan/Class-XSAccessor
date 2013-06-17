@@ -6,7 +6,7 @@ use Carp qw/croak/;
 use Class::XSAccessor::Heavy;
 use XSLoader;
 
-our $VERSION = '1.16';
+our $VERSION = '1.17';
 
 XSLoader::load('Class::XSAccessor', $VERSION);
 
@@ -39,6 +39,8 @@ sub import {
   my $acc_subs       = _make_hash($opts{accessors} || {});
   my $lvacc_subs     = _make_hash($opts{lvalue_accessors} || {});
   my $pred_subs      = _make_hash($opts{predicates} || {});
+  my $ex_pred_subs   = _make_hash($opts{exists_predicates} || {});
+  my $def_pred_subs  = _make_hash($opts{defined_predicates} || {});
   my $test_subs      = _make_hash($opts{__tests__} || {});
   my $construct_subs = $opts{constructors} || [defined($opts{constructor}) ? $opts{constructor} : ()];
   my $true_subs      = $opts{true} || [];
@@ -49,7 +51,9 @@ sub import {
                         ["accessor", $acc_subs],
                         ["lvalue_accessor", $lvacc_subs],
                         ["test", $test_subs],
-                        ["predicate", $pred_subs] )
+                        ["ex_predicate", $ex_pred_subs],
+                        ["def_predicate", $def_pred_subs],
+                        ["def_predicate", $pred_subs] )
   {
     my $subs = $subtype->[1];
     foreach my $subname (keys %$subs) {
@@ -88,8 +92,11 @@ sub _generate_method {
   elsif ($type eq 'setter') {
     newxs_setter($subname, $hashkey, $opts->{chained}||0);
   }
-  elsif ($type eq 'predicate') {
-    newxs_predicate($subname, $hashkey);
+  elsif ($type eq 'def_predicate') {
+    newxs_defined_predicate($subname, $hashkey);
+  }
+  elsif ($type eq 'ex_predicate') {
+    newxs_exists_predicate($subname, $hashkey);
   }
   elsif ($type eq 'constructor') {
     newxs_constructor($subname);
@@ -134,7 +141,12 @@ Class::XSAccessor - Generate fast XS accessors without runtime compilation
       foo => 'foo',
       bar => 'bar',
     },
-    predicates => {
+    # "predicates" is an alias for "defined_predicates"
+    defined_predicates => {
+      defined_foo => 'foo',
+      defined_bar => 'bar',
+    },
+    exists_predicates => {
       has_foo => 'foo',
       has_bar => 'bar',
     },
@@ -164,7 +176,8 @@ As of version 1.05, some alternative syntax forms are available:
 
 Class::XSAccessor implements fast read, write and read/write accessors in XS.
 Additionally, it can provide predicates such as C<has_foo()> for testing
-whether the attribute C<foo> is defined in the object.
+whether the attribute C<foo> exists in the object (which is different from
+"is defined within the object").
 It only works with objects that are implemented as ordinary hashes.
 L<Class::XSAccessor::Array> implements the same interface for objects
 that use arrays for their internal representation.
@@ -205,6 +218,11 @@ just return true or false (and always do so). If that seems like a
 really superfluous thing to you, then consider a large class hierarchy
 with interfaces such as L<PPI>. These methods are provided by the C<true>
 and C<false> options - see the synopsis.
+
+C<defined_predicates> check whether a given object attribute is defined.
+C<predicates> is an alias for C<defined_predicates> for compatibility with
+older versions of C<Class::XSAccessor>. C<exists_predicates> checks
+whether the given attribute exists in the object using C<exists>.
 
 =head1 OPTIONS
 
@@ -299,7 +317,7 @@ chocolateboy E<lt>chocolate@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008, 2009, 2010, 2011, 2012 by Steffen Mueller
+Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 by Steffen Mueller
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8 or,
