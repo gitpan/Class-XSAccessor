@@ -18,8 +18,9 @@ no_index:
     - t
     - inc
 requires:
+  Time::HiRes: 0
   XSLoader: 0
   perl: 5.008
 resources:
   repository: git://github.com/tsee/Class-XSAccessor.git
-version: 1.18
+version: 1.19

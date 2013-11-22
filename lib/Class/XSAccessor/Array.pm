@@ -6,7 +6,7 @@ use Carp qw/croak/;
 use Class::XSAccessor;
 use Class::XSAccessor::Heavy;
 
-our $VERSION = '1.18';
+our $VERSION = '1.19';
 
 sub import {
   my $own_class = shift;
@@ -254,7 +254,7 @@ a la Inline::C is a no go.
 Threading. With version 1.00, a memory leak has been B<fixed> that would leak a small amount of
 memory if you loaded C<Class::XSAccessor>-based classes in a subthread that hadn't been loaded
 in the "main" thread before. If the subthread then terminated, a hash key and an int per
-associated method used ot be lost. Note that this mattered only if classes were B<only> loaded
+associated method used to be lost. Note that this mattered only if classes were B<only> loaded
 in a sort of throw-away thread.
 
 In the new implementation as of 1.00, the memory will not be released again either in the above
